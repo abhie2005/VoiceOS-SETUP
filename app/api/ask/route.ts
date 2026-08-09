@@ -1,15 +1,26 @@
 import { NextResponse } from "next/server";
-import { lookup } from "@/lib/db/knowledge";
+import { callTool, parseAnswer } from "@/lib/mcp-client";
+import { lookup, visualsFor } from "@/lib/db/knowledge";
 
 /**
- * Mock Buddy API.
+ * The web app's question endpoint.
  *
- * Stands in for `POST /v1/questions` on the real backend so the product runs
- * end to end without Phase A. The response shape deliberately matches what the
- * real answer event carries, so switching over is a change of URL rather than a
- * change of client code.
+ * Asks the same MCP backend VoiceOS asks, so the words on screen and the words
+ * spoken aloud come from one source of truth.
+ *
+ * Two things the backend cannot give us, both by design:
+ *
+ * 1. Visuals. MCP tools return text only — there is no animation or
+ *    walkthrough payload in the contract yet. So the answer's words come from
+ *    the backend and its visuals are matched locally. When Phase A adds
+ *    `animation.play`, delete `visualsFor` and take them off the wire.
+ *
+ * 2. Tiering. The backend answers from company documents or not at all. When
+ *    it has nothing sourced, we fall back to local general knowledge — clearly
+ *    labelled as not-AMS-policy — before giving up and handing off.
  */
 export const runtime = "nodejs";
+export const maxDuration = 30;
 
 export async function POST(req: Request) {
   let question: string;
@@ -30,14 +41,48 @@ export async function POST(req: Request) {
     );
   }
 
-  // Retrieval takes time in the real thing, and the character's "thinking"
-  // state needs somewhere to live. Without this the answer lands instantly and
-  // Garfield looks like a lookup table.
-  await new Promise((r) => setTimeout(r, 600));
+  const visuals = visualsFor(question);
+  const turnId = crypto.randomUUID();
 
-  return NextResponse.json({
-    turnId: crypto.randomUUID(),
-    question,
-    ...lookup(question),
-  });
+  try {
+    const raw = await callTool("answer_company_question", { question });
+    const { text, citations } = parseAnswer(raw);
+
+    // A sourced answer is a company answer. Unsourced means the backend had
+    // nothing internal, so it is not safe to present as policy.
+    if (citations.length > 0 && text) {
+      return NextResponse.json({
+        turnId,
+        question,
+        scope: "company",
+        text,
+        citations,
+        source: "mcp",
+        ...visuals,
+      });
+    }
+
+    const local = lookup(question);
+    return NextResponse.json({
+      turnId,
+      question,
+      ...local,
+      // Keep the backend's wording when it said something useful but uncited.
+      ...(local.scope === "unknown" && text ? { text } : {}),
+      source: "mcp+local",
+      ...visuals,
+    });
+  } catch (err) {
+    // The backend being down must not take the character down with it. Local
+    // knowledge still answers, and the client is told the answer is degraded.
+    console.error("[ask] MCP unavailable, falling back to local:", err);
+    return NextResponse.json({
+      turnId,
+      question,
+      ...lookup(question),
+      source: "local",
+      degraded: true,
+      ...visuals,
+    });
+  }
 }

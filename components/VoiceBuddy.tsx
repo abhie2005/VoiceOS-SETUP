@@ -72,6 +72,8 @@ export default function VoiceBuddy() {
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const [dragging, setDragging] = useState(false);
   const [tour, setTour] = useState<string | null>(null);
+  /** Live journey status, once the backend answers. */
+  const [greetingText, setGreetingText] = useState(GREETING);
   const [media, setMedia] = useState<Turn | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -84,6 +86,20 @@ export default function VoiceBuddy() {
 
   const later = useCallback((fn: () => void, ms: number) => {
     timers.current.push(setTimeout(fn, ms));
+  }, []);
+
+  // Opens with where you actually are, not a generic hello.
+  useEffect(() => {
+    let live = true;
+    fetch("/api/status")
+      .then((r) => r.json())
+      .then((d: { text?: string | null }) => {
+        if (live && d.text) setGreetingText(`${d.text} Want to get started?`);
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -368,7 +384,7 @@ export default function VoiceBuddy() {
                 onClick={talk}
                 className="caption-in glass-chip rounded-full px-3.5 py-2 text-xs font-medium shadow-lg transition hover:scale-105"
               >
-                {GREETING}
+                {greetingText}
               </button>
             ) : null}
           </div>

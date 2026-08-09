@@ -323,3 +323,23 @@ export function lookup(question: string): LookupResult {
     text: "I don't have anything on that, and I'm not going to invent an answer. I'll flag it so it gets written down for the next hire — in the meantime your onboarding lead is the fastest route.",
   };
 }
+
+/**
+ * Visuals for a question, chosen locally.
+ *
+ * The MCP contract carries text only, so an answer's words can come from the
+ * backend while its animation and walkthrough are matched here. This is the
+ * seam that disappears the moment Phase A emits `animation.play` — at that
+ * point the payload arrives on the wire and this function goes away.
+ */
+export function visualsFor(question: string): {
+  animation?: AnimationPayload;
+  tour?: string;
+} {
+  const best = KNOWLEDGE.map((e) => ({ e, s: score(question, e.keywords) }))
+    .filter((r) => r.s > 0 && (r.e.animation || r.e.tour))
+    .sort((a, b) => b.s - a.s)[0];
+
+  if (!best) return {};
+  return { animation: best.e.animation, tour: best.e.tour };
+}
