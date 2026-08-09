@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Pause, Play, SkipBack, SkipForward } from "lucide-react";
 import PixelSprite from "./PixelSprite";
-import type { SpriteName } from "./sprites";
+import { isSpriteName, type SpriteName } from "./sprites";
 import { cn } from "@/lib/utils";
 
 export type Motion = "pop" | "rise" | "drift" | "pulse" | "shake";
@@ -144,4 +144,29 @@ export default function PixelScene({ title, beats }: PixelAnimation) {
       </div>
     </div>
   );
+}
+
+/**
+ * Adapts a backend animation payload to a renderable scene.
+ *
+ * Sprite names cross the wire as plain strings, so unknown ones are dropped
+ * rather than rendered as a blank — a beat that loses every sprite is dropped
+ * too, so a typo upstream degrades to a shorter animation instead of a gap.
+ */
+export function toPixelAnimation(payload: {
+  title: string;
+  beats: { sprites: string[]; caption: string; motion?: string; ms?: number }[];
+}): PixelAnimation {
+  const motions: Motion[] = ["pop", "rise", "drift", "pulse", "shake"];
+  return {
+    title: payload.title,
+    beats: payload.beats
+      .map((b) => ({
+        sprites: b.sprites.filter(isSpriteName),
+        caption: b.caption,
+        motion: motions.find((m) => m === b.motion),
+        ms: b.ms,
+      }))
+      .filter((b) => b.sprites.length > 0),
+  };
 }

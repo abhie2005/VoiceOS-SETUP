@@ -350,3 +350,8 @@ export const SPRITES = {
 } satisfies Record<string, string[]>;
 
 export type SpriteName = keyof typeof SPRITES;
+
+/** Sprite names arriving from the backend are untrusted strings. */
+export function isSpriteName(value: string): value is SpriteName {
+  return Object.prototype.hasOwnProperty.call(SPRITES, value);
+}

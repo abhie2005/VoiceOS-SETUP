@@ -4,7 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Garfield, { type GarfieldState } from "./Garfield";
 import { Badge } from "@/components/ui/badge";
 import GuidedTour, { type TourStep } from "./GuidedTour";
-import PixelScene, { type PixelAnimation } from "./pixel/PixelScene";
+import PixelScene, {
+  toPixelAnimation,
+  type PixelAnimation,
+} from "./pixel/PixelScene";
+import { useBuddyEvents } from "@/lib/useBuddyEvents";
 import { cn } from "@/lib/utils";
 
 type Turn = {
@@ -238,19 +242,62 @@ export default function VoiceBuddy() {
     [talk],
   );
 
+  /**
+   * Live backend, when there is one.
+   *
+   * Everything below prefers the event stream and falls back to the scripted
+   * demo when it isn't connected — so this component works standalone today
+   * and lights up the moment Phase A is running, with no further changes.
+   */
+  const live = useBuddyEvents();
+
+  const shownState = live.connected ? live.agent : state;
+
+  const shownCaption: Turn | null = live.connected
+    ? live.answer
+      ? {
+          id: 0,
+          from: "garfield",
+          text: live.answer.text,
+          cites: live.answer.citations?.map((c) => c.title),
+          unknown: live.answer.unknown,
+        }
+      : null
+    : caption;
+
+  const shownMedia: Turn | null = live.connected
+    ? live.animation
+      ? {
+          id: 0,
+          from: "garfield" as const,
+          text: "",
+          animation: toPixelAnimation(live.animation),
+        }
+      : null
+    : media;
+
+  // Live walkthroughs carry their own steps; the demo looks them up in TOURS.
+  const shownSteps = live.connected
+    ? (live.walkthrough?.steps ?? null)
+    : tour
+      ? (TOURS[tour] ?? null)
+      : null;
+
   const status =
-    state === "listening"
+    shownState === "listening"
       ? "Listening…"
-      : state === "thinking"
+      : shownState === "thinking"
         ? "Checking the wiki…"
         : null;
 
   return (
     <>
-      {media && <MediaOverlay turn={media} onClose={() => setMedia(null)} />}
+      {shownMedia && (
+        <MediaOverlay turn={shownMedia} onClose={() => setMedia(null)} />
+      )}
 
-      {tour && TOURS[tour] && (
-        <GuidedTour steps={TOURS[tour]} onDone={() => setTour(null)} />
+      {shownSteps && (
+        <GuidedTour steps={shownSteps} onDone={() => setTour(null)} />
       )}
 
       <div
@@ -281,7 +328,7 @@ export default function VoiceBuddy() {
             className="pointer-events-auto block w-[62px] shrink-0 cursor-grab touch-none select-none active:cursor-grabbing md:w-[84px]"
           >
             <Garfield
-              state={state}
+              state={shownState}
               grabbed={dragging}
               className="h-auto w-full"
             />
@@ -295,15 +342,15 @@ export default function VoiceBuddy() {
                   {status}
                 </span>
               </Bubble>
-            ) : caption ? (
-              <Bubble key={caption.id}>
-                {caption.from === "you" ? (
+            ) : shownCaption ? (
+              <Bubble key={shownCaption.id}>
+                {shownCaption.from === "you" ? (
                   <span className="text-sm italic text-muted-foreground">
-                    “{caption.text}”
+                    “{shownCaption.text}”
                   </span>
                 ) : (
                   <>
-                    {caption.unknown && (
+                    {shownCaption.unknown && (
                       <Badge
                         variant="outline"
                         className="mb-2 border-dashed text-[10px] font-semibold uppercase"
@@ -311,18 +358,20 @@ export default function VoiceBuddy() {
                         Not documented
                       </Badge>
                     )}
-                    <p className="text-sm leading-relaxed">{caption.text}</p>
-                    {(caption.video || caption.animation) && (
+                    <p className="text-sm leading-relaxed">
+                      {shownCaption.text}
+                    </p>
+                    {(shownCaption.video || shownCaption.animation) && (
                       <button
-                        onClick={() => setMedia(caption)}
+                        onClick={() => setMedia(shownCaption)}
                         className="mt-2.5 flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition hover:opacity-90"
                       >
                         ▶ Play again
                       </button>
                     )}
-                    {caption.cites && (
+                    {shownCaption.cites && (
                       <ul className="mt-2.5 flex flex-wrap gap-1.5">
-                        {caption.cites.map((c) => (
+                        {shownCaption.cites.map((c) => (
                           <li key={c}>
                             <Badge
                               variant="secondary"
