@@ -1,0 +1,199 @@
+<h2 class="sr-only">Auto-playing payroll setup walkthrough themed in ADP's red and navy branding, with a step path, narrated captions, and a review summary</h2>
+<style>
+.w-node-circle{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;border:1.5px solid #CBCEDB;color:#5A5F73;background:#fff;flex-shrink:0;transition:all .2s ease}
+.w-node.active .w-node-circle{border-color:#E2231A;color:#E2231A;background:#FCEBEB}
+.w-node.done .w-node-circle{border-color:#E2231A;background:#E2231A;color:#fff}
+.w-node-label{font-size:11px;color:#5A5F73;white-space:nowrap}
+.w-node.active .w-node-label{color:#141B5C;font-weight:500}
+.w-line{flex:1;height:2px;background:#E4E5EC;margin:0 4px}
+.w-line.done{background:#E2231A}
+.w-row{display:flex;flex-direction:column;gap:4px;margin-bottom:14px;border-radius:6px;padding:6px 8px;margin-left:-8px;transition:background .2s ease}
+.w-row.hl{background:#FCEBEB}
+.w-row label{font-size:13px;color:#5A5F73}
+.w-row input,.w-row select{border:1px solid #CBCEDB;border-radius:4px;height:32px;padding:0 8px;font-size:13px;background:#fff;color:#141B5C;}
+.w-dot{width:6px;height:6px;border-radius:50%;background:#E2231A;animation:pulse 1s infinite ease-in-out}
+@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
+.w-play-btn{background:#fff;border:1.5px solid #E2231A;color:#E2231A;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+</style>
+
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+  <span style="font-size:18px;font-weight:500;color:#E2231A;">ADP</span>
+  <span style="font-size:13px;color:#5A5F73;">Payroll setup</span>
+</div>
+
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">
+  <button id="w-play" class="w-play-btn" aria-label="Play"><i class="ti ti-player-play" aria-hidden="true"></i></button>
+  <div style="flex:1;height:4px;border-radius:4px;background:#EFEFF2;overflow:hidden;">
+    <div id="w-progress" style="height:100%;width:0%;background:#E2231A;transition:width .3s ease;"></div>
+  </div>
+</div>
+
+<div id="w-path" style="display:flex;align-items:center;padding-bottom:1rem;"></div>
+
+<div style="background:#FCEBEB;border-radius:8px;padding:10px 14px;display:flex;gap:10px;align-items:center;margin-bottom:1.25rem;min-height:20px;">
+  <span class="w-dot" id="w-dot" aria-hidden="true" style="visibility:hidden;"></span>
+  <p id="w-caption" style="font-size:13px;color:#A31810;margin:0;">Press play to watch payroll set itself up.</p>
+</div>
+
+<div id="w-content" style="min-height:180px;"></div>
+
+<script>
+const steps = [
+  {key:'deposit', label:'Deposit vault', intro:"Setting up your direct deposit — this is where your paycheck lands.",
+    fields:[
+      {id:'f-bank', label:'Bank name', type:'text', value:'Chase', state:'bank'},
+      {id:'f-accttype', label:'Account type', type:'select', value:'Checking', options:['Checking','Savings'], state:'acctType'},
+      {id:'f-routing', label:'Routing number', type:'text', value:'123456789', state:'routing'},
+      {id:'f-account', label:'Account number', type:'text', value:'000123456789', state:'account'}
+    ], outro:"Direct deposit saved."},
+  {key:'tax', label:'Tax scroll', intro:"Now tax withholding — this sets how much comes out of every paycheck.",
+    fields:[
+      {id:'f-filing', label:'Filing status', type:'select', value:'Single', options:['Single','Married filing jointly','Head of household'], state:'filingStatus'},
+      {id:'f-state', label:'State of residence', type:'select', value:'California', options:['California','New York','Texas','Washington'], state:'taxState'}
+    ], outro:"Tax withholding saved."},
+  {key:'schedule', label:'Pay calendar', intro:"AMS pays bi-weekly, every other Friday. Here's what comes out of each check.",
+    fields:[
+      {id:'f-stub', label:'Pay stub delivery', type:'select', value:'Email', options:['Email','Mail'], state:'stub'}
+    ], outro:"Pay schedule confirmed.", info:true},
+  {key:'review', label:'Final review', intro:"Last look before this goes live.", fields:[], outro:"All set — first paycheck Friday, August 21.", review:true}
+];
+const state = {};
+let paused = true;
+let cur = -1;
+
+function delay(ms){
+  return new Promise(res=>{
+    let elapsed = 0;
+    const iv = setInterval(()=>{
+      if(!paused){ elapsed += 40; if(elapsed>=ms){ clearInterval(iv); res(); } }
+    }, 40);
+  });
+}
+
+function renderPath(activeIdx, doneUpTo){
+  const el = document.getElementById('w-path');
+  el.innerHTML = steps.map((s,i)=>{
+    const cls = i<doneUpTo ? 'done' : (i===activeIdx ? 'active' : '');
+    const inner = i<doneUpTo ? '<i class="ti ti-check" aria-hidden="true"></i>' : (i+1);
+    const line = i < steps.length-1 ? `<div class="w-line ${i<doneUpTo?'done':''}"></div>` : '';
+    return `<div class="w-node ${cls}" style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+      <div class="w-node-circle">${inner}</div>
+      <span class="w-node-label">${s.label}</span>
+    </div>${line}`;
+  }).join('');
+}
+
+function shell(stepIndex){
+  const s = steps[stepIndex];
+  const c = document.getElementById('w-content');
+  if(s.review){
+    c.innerHTML = `<div id="w-summary" style="display:flex;flex-direction:column;gap:8px;"></div>`;
+    return;
+  }
+  let infoHtml = '';
+  if(s.info){
+    infoHtml = `<div style="background:#F5F6FA;border-radius:6px;padding:12px 14px;margin-bottom:14px;">
+      <p style="font-size:13px;color:#5A5F73;margin:0 0 6px;">Pay frequency</p>
+      <p style="font-size:14px;color:#141B5C;margin:0 0 10px;">Bi-weekly — next pay date Aug 21, 2026</p>
+      <p style="font-size:13px;color:#5A5F73;margin:0 0 4px;">Typical deductions per paycheck</p>
+      <p style="font-size:13px;color:#141B5C;margin:2px 0;">Health insurance premium — $85</p>
+      <p style="font-size:13px;color:#141B5C;margin:2px 0;">401k contribution — as elected</p>
+    </div>`;
+  }
+  const fieldsHtml = s.fields.map(f=>{
+    if(f.type==='select'){
+      return `<div class="w-row" id="row-${f.id}"><label>${f.label}</label><select id="${f.id}">${f.options.map(o=>`<option>${o}</option>`).join('')}</select></div>`;
+    }
+    return `<div class="w-row" id="row-${f.id}"><label>${f.label}</label><input id="${f.id}" value=""/></div>`;
+  }).join('');
+  c.innerHTML = infoHtml + fieldsHtml;
+}
+
+async function typeInto(el, text){
+  el.value = '';
+  for(let i=0;i<text.length;i++){
+    el.value += text[i];
+    await delay(28);
+  }
+}
+
+async function runField(f){
+  const row = document.getElementById(`row-${f.id}`);
+  row.classList.add('hl');
+  const el = document.getElementById(f.id);
+  if(f.type==='select'){
+    await delay(300);
+    el.value = f.value;
+  } else {
+    await typeInto(el, f.value);
+  }
+  state[f.state] = f.value;
+  await delay(250);
+  row.classList.remove('hl');
+}
+
+async function runReview(){
+  const rows = [
+    ['Bank', `${state.bank||'—'} (${state.acctType||'—'})`],
+    ['Routing / account', `${state.routing||'—'} / ${state.account||'—'}`],
+    ['Filing status', state.filingStatus||'—'],
+    ['State', state.taxState||'—'],
+    ['Pay stub delivery', state.stub||'—']
+  ];
+  const wrap = document.getElementById('w-summary');
+  for(const [label, val] of rows){
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;justify-content:space-between;font-size:13px;color:#141B5C;';
+    row.innerHTML = `<span style="color:#5A5F73;">${label}</span><span>${val}</span>`;
+    wrap.appendChild(row);
+    await delay(350);
+  }
+}
+
+async function play(){
+  document.getElementById('w-play').innerHTML = '<i class="ti ti-player-pause" aria-hidden="true"></i>';
+  for(let i=0;i<steps.length;i++){
+    cur = i;
+    renderPath(i, i);
+    shell(i);
+    document.getElementById('w-dot').style.visibility = 'visible';
+    document.getElementById('w-caption').textContent = steps[i].intro;
+    document.getElementById('w-progress').style.width = `${(i/steps.length)*100}%`;
+    await delay(500);
+    if(steps[i].review){ await runReview(); }
+    else { for(const f of steps[i].fields){ await runField(f); } }
+    document.getElementById('w-caption').textContent = steps[i].outro;
+    renderPath(i, i+1);
+    document.getElementById('w-progress').style.width = `${((i+1)/steps.length)*100}%`;
+    await delay(600);
+  }
+  document.getElementById('w-dot').style.visibility = 'hidden';
+  document.getElementById('w-play').innerHTML = '<i class="ti ti-refresh" aria-hidden="true"></i>';
+  document.getElementById('w-play').dataset.state = 'done';
+}
+
+document.getElementById('w-play').addEventListener('click', async (e)=>{
+  const btn = e.currentTarget;
+  if(btn.dataset.state === 'done'){
+    Object.keys(state).forEach(k=>delete state[k]);
+    cur = -1;
+    renderPath(-1, 0);
+    document.getElementById('w-content').innerHTML = '';
+    document.getElementById('w-caption').textContent = 'Press play to watch payroll set itself up.';
+    document.getElementById('w-progress').style.width = '0%';
+    btn.dataset.state = '';
+    btn.innerHTML = '<i class="ti ti-player-play" aria-hidden="true"></i>';
+    paused = true;
+    return;
+  }
+  if(cur === -1){
+    paused = false;
+    play();
+  } else {
+    paused = !paused;
+    btn.innerHTML = paused ? '<i class="ti ti-player-play" aria-hidden="true"></i>' : '<i class="ti ti-player-pause" aria-hidden="true"></i>';
+  }
+});
+
+renderPath(-1, 0);
+</script>
