@@ -18,7 +18,7 @@ const jetbrains = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "AMS — Onboarding",
   description:
-    "Internal onboarding for new AMS engineers. Voice-native, powered by Nimbus.",
+    "Internal onboarding for new AMS engineers. Voice-native, powered by Garfield.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -87,12 +87,10 @@ export default function GuidedTour({ steps, onDone }: Props) {
           : "translate(-50%, -100%)",
       }}
     >
-      {!anchor.below && (
-        <Label i={i} total={steps.length} text={step.label} />
-      )}
+      {!anchor.below && <Label i={i} total={steps.length} text={step.label} />}
 
       <PawPointer
-        size={40}
+        size={32}
         className="paw-tap"
         // Flipped to point down when it's sitting above the target.
         style={anchor.below ? undefined : { transform: "rotate(180deg)" }}

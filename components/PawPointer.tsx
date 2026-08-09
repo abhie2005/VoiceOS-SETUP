@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 /**
- * A 16×16 cat paw, drawn in the same pixel idiom as Nimbus.
+ * A 16×16 cat paw, drawn in the same pixel idiom as Garfield.
  * K outline · W fur · P pad
  */
 const PAW = [
@@ -25,7 +25,7 @@ const PAW = [
 
 const COLORS: Record<string, string> = {
   K: "#2f3336",
-  W: "#f2f4f7",
+  W: "#9aa4ad", // matches Garfield's fur
   P: "#c4778f",
 };
 

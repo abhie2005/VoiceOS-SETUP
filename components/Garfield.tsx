@@ -1,19 +1,19 @@
 import { cn } from "@/lib/utils";
 
-export type NimbusState = "idle" | "listening" | "thinking" | "speaking";
+export type GarfieldState = "idle" | "listening" | "thinking" | "speaking";
 
 type Props = {
-  state?: NimbusState;
+  state?: GarfieldState;
   size?: number;
   className?: string;
   /** Head only — for tiny inline marks. */
   bare?: boolean;
-  /** Being dragged. Nimbus has opinions about this. */
+  /** Being dragged. Garfield has opinions about this. */
   grabbed?: boolean;
 };
 
 /**
- * Nimbus, as a 20×19 pixel sprite.
+ * Garfield, as a 20×19 pixel sprite.
  *
  * K outline · F fur · S stripe · L light fur · P pink · E eye · T tail
  * The whiskers are the K pixels that poke out past the head on rows 6, 8, 10.
@@ -41,7 +41,7 @@ const SPRITE = [
 ];
 
 /**
- * Ears pinned flat, which is the whole tell. Replaces rows 0-3 while Nimbus is
+ * Ears pinned flat, which is the whole tell. Replaces rows 0-3 while Garfield is
  * being carried around against its wishes.
  */
 const FLAT_EARS = [
@@ -64,7 +64,7 @@ const COLORS: Record<string, string> = {
 /** Rows below this are body — dropped in `bare` mode. */
 const HEAD_ROWS = 13;
 
-export default function Nimbus({
+export default function Garfield({
   state = "idle",
   size = 72,
   className,
@@ -107,7 +107,7 @@ export default function Nimbus({
       height={(size * rows.length) / 20}
       className={cn(className)}
       role="img"
-      aria-label={`Nimbus the cat is ${state}`}
+      aria-label={`Garfield the cat is ${state}`}
       // Without this, neighbouring pixels get antialiased and hairline seams
       // show through the sprite.
       shapeRendering="crispEdges"

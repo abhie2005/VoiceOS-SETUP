@@ -175,23 +175,46 @@
    Motion carries agent state, so it survives any palette change. */
 
 @keyframes voice-ring {
-  0% { transform: scale(0.86); opacity: 0.5; }
-  80%, 100% { transform: scale(1.5); opacity: 0; }
+  0% {
+    transform: scale(0.86);
+    opacity: 0.5;
+  }
+  80%,
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
 }
 
 @keyframes voice-bar {
-  0%, 100% { transform: scaleY(0.2); }
-  50% { transform: scaleY(1); }
+  0%,
+  100% {
+    transform: scaleY(0.2);
+  }
+  50% {
+    transform: scaleY(1);
+  }
 }
 
 @keyframes voice-think {
-  0%, 100% { opacity: 0.2; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 @keyframes caption-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ---------- Sprite motion ----------
@@ -200,15 +223,25 @@
    as a sprite. */
 
 @keyframes sprite-bob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-1px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1px);
+  }
 }
 
 /* Being carried. A real cat goes stiff and unimpressed rather than thrashing,
    so this is a slow, shallow sway — the ears and eyes carry the mood. */
 @keyframes sprite-squirm {
-  0%, 100% { transform: rotate(-3deg); }
-  50% { transform: rotate(3deg); }
+  0%,
+  100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
 }
 
 /* ---------- Pixel scene motion ----------
@@ -216,48 +249,98 @@
    read as animation frames rather than CSS transitions. */
 
 @keyframes px-pop {
-  0% { transform: scale(0); }
-  60% { transform: scale(1.15); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(0);
+  }
+  60% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes px-rise {
-  0% { transform: translateY(14px); opacity: 0; }
-  100% { transform: translateY(0); opacity: 1; }
+  0% {
+    transform: translateY(14px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes px-drift {
-  0%, 100% { transform: translateX(-5px); }
-  50% { transform: translateX(5px); }
+  0%,
+  100% {
+    transform: translateX(-5px);
+  }
+  50% {
+    transform: translateX(5px);
+  }
 }
 
 @keyframes px-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.12); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
 }
 
 @keyframes px-shake {
-  0%, 100% { transform: translateX(-2px) rotate(-2deg); }
-  50% { transform: translateX(2px) rotate(2deg); }
+  0%,
+  100% {
+    transform: translateX(-2px) rotate(-2deg);
+  }
+  50% {
+    transform: translateX(2px) rotate(2deg);
+  }
 }
 
-.px-pop { animation: px-pop 0.42s steps(4, end) both; }
-.px-rise { animation: px-rise 0.5s steps(4, end) both; }
-.px-drift { animation: px-drift 1.6s steps(3, end) infinite; }
-.px-pulse { animation: px-pulse 1.2s steps(3, end) infinite; }
-.px-shake { animation: px-shake 0.5s steps(2, end) infinite; }
+.px-pop {
+  animation: px-pop 0.42s steps(4, end) both;
+}
+.px-rise {
+  animation: px-rise 0.5s steps(4, end) both;
+}
+.px-drift {
+  animation: px-drift 1.6s steps(3, end) infinite;
+}
+.px-pulse {
+  animation: px-pulse 1.2s steps(3, end) infinite;
+}
+.px-shake {
+  animation: px-shake 0.5s steps(2, end) infinite;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .px-pop, .px-rise, .px-drift, .px-pulse, .px-shake { animation: none; }
+  .px-pop,
+  .px-rise,
+  .px-drift,
+  .px-pulse,
+  .px-shake {
+    animation: none;
+  }
 }
 
 /* The paw taps toward whatever it's pointing at. */
 @keyframes paw-tap {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
-.paw-tap { animation: paw-tap 0.9s steps(2, end) infinite; }
+.paw-tap {
+  animation: paw-tap 0.9s steps(2, end) infinite;
+}
 
 /* The element the tour is currently pointing at. */
 [data-tour-active] {
@@ -269,59 +352,95 @@
 }
 
 @keyframes tour-glow {
-  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--chart-1) 45%, transparent); }
-  50% { box-shadow: 0 0 0 7px transparent; }
-}
-
-@keyframes sprite-tail {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(-14deg); }
-}
-
-@keyframes sprite-blink {
-  0%, 92%, 100% { transform: scaleY(1); }
-  94% { transform: scaleY(0.2); }
-}
-
-@keyframes sprite-mouth {
-  0%, 100% { transform: scaleY(1); }
-  50% { transform: scaleY(0.2); }
-}
-
-/* Nimbus crosses the page. Alternating rather than looping — a linear loop
-   teleports back to the right edge, which reads as a glitch. */
-@keyframes nimbus-travel {
-  from { transform: translateX(calc(100vw - 9rem)); }
-  to { transform: translateX(0.5rem); }
-}
-
-@media (min-width: 768px) {
-  @keyframes nimbus-travel {
-    from { transform: translateX(calc(100vw - 18rem)); }
-    to { transform: translateX(1rem); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--chart-1) 45%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 7px transparent;
   }
 }
 
-.nimbus-travel {
-  animation: nimbus-travel 26s ease-in-out infinite alternate;
+@keyframes sprite-tail {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-14deg);
+  }
+}
+
+@keyframes sprite-blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+  94% {
+    transform: scaleY(0.2);
+  }
+}
+
+@keyframes sprite-mouth {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.2);
+  }
+}
+
+/* Garfield crosses the page. Alternating rather than looping — a linear loop
+   teleports back to the right edge, which reads as a glitch. */
+@keyframes garfield-travel {
+  from {
+    transform: translateX(calc(100vw - 9rem));
+  }
+  to {
+    transform: translateX(0.5rem);
+  }
+}
+
+@media (min-width: 768px) {
+  @keyframes garfield-travel {
+    from {
+      transform: translateX(calc(100vw - 18rem));
+    }
+    to {
+      transform: translateX(1rem);
+    }
+  }
+}
+
+.garfield-travel {
+  animation: garfield-travel 26s ease-in-out infinite alternate;
 }
 
 /* Hovering parks it — a moving target is hard to click. */
-.nimbus-travel:hover {
+.garfield-travel:hover {
   animation-play-state: paused;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nimbus-travel { animation: none; }
+  .garfield-travel {
+    animation: none;
+  }
 }
 
-.voice-ring { animation: voice-ring 2.2s ease-out infinite; transform-origin: center; }
-.caption-in { animation: caption-in 0.28s ease-out both; }
+.voice-ring {
+  animation: voice-ring 2.2s ease-out infinite;
+  transform-origin: center;
+}
+.caption-in {
+  animation: caption-in 0.28s ease-out both;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .voice-ring,
   .caption-in,
-  /* Nimbus sets its animations inline, on both groups and shapes. */
+  /* Garfield sets its animations inline, on both groups and shapes. */
   svg [style*="animation"],
   .ambient::before,
   .ambient::after {
@@ -339,9 +458,21 @@
   z-index: -1;
   overflow: hidden;
   background:
-    radial-gradient(60rem 40rem at 12% -10%, color-mix(in oklab, var(--chart-1) 22%, transparent), transparent 62%),
-    radial-gradient(50rem 36rem at 92% 8%, color-mix(in oklab, var(--ring) 20%, transparent), transparent 64%),
-    radial-gradient(46rem 40rem at 50% 108%, color-mix(in oklab, var(--accent) 30%, transparent), transparent 60%),
+    radial-gradient(
+      60rem 40rem at 12% -10%,
+      color-mix(in oklab, var(--chart-1) 22%, transparent),
+      transparent 62%
+    ),
+    radial-gradient(
+      50rem 36rem at 92% 8%,
+      color-mix(in oklab, var(--ring) 20%, transparent),
+      transparent 64%
+    ),
+    radial-gradient(
+      46rem 40rem at 50% 108%,
+      color-mix(in oklab, var(--accent) 30%, transparent),
+      transparent 60%
+    ),
     var(--background);
 }
 
@@ -373,13 +504,21 @@
 }
 
 @keyframes drift-a {
-  from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(6rem, 4rem, 0); }
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(6rem, 4rem, 0);
+  }
 }
 
 @keyframes drift-b {
-  from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(-5rem, -3rem, 0); }
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-5rem, -3rem, 0);
+  }
 }
 
 .glass {
@@ -421,7 +560,8 @@
    outranks Tailwind's border-*-0 utilities — this needs its own rule. */
 .glass-header {
   border: 0;
-  border-bottom: 1px solid color-mix(in oklab, var(--foreground) 12%, transparent);
+  border-bottom: 1px solid
+    color-mix(in oklab, var(--foreground) 12%, transparent);
   border-radius: 0;
 }
 
@@ -430,5 +570,6 @@
   backdrop-filter: blur(16px) saturate(150%);
   -webkit-backdrop-filter: blur(16px) saturate(150%);
   border: 1px solid color-mix(in oklab, var(--foreground) 14%, transparent);
-  box-shadow: 0 1px 0 0 color-mix(in oklab, var(--foreground) 16%, transparent) inset;
+  box-shadow: 0 1px 0 0 color-mix(in oklab, var(--foreground) 16%, transparent)
+    inset;
 }

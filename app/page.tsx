@@ -31,7 +31,10 @@ export default function Home() {
       <header className="glass glass-header sticky top-0 z-40">
         <div className="mx-auto flex max-w-6xl items-center gap-6 px-6 py-3">
           <AmsLogo className="h-8 w-16 shrink-0" />
-          <Badge variant="outline" className="hidden text-[10px] font-medium sm:flex">
+          <Badge
+            variant="outline"
+            className="hidden text-[10px] font-medium sm:flex"
+          >
             Internal
           </Badge>
 
@@ -65,7 +68,7 @@ export default function Home() {
       </header>
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-12">
-        {/* Nimbus deliberately does not appear here — the only instance is the
+        {/* Garfield deliberately does not appear here — the only instance is the
             live one that travels the page, so there's never a second, inert
             copy competing with it. */}
         <section className="flex flex-col items-center py-10 text-center">
@@ -73,7 +76,7 @@ export default function Home() {
             Welcome, Joy. Just talk to me.
           </h1>
           <p className="mt-4 max-w-xl text-pretty text-muted-foreground">
-            Nimbus is a voice buddy, not a chatbot. Say what you&apos;re
+            Garfield is a voice buddy, not a chatbot. Say what you&apos;re
             wondering out loud — however basic — and it answers from the real
             internal wiki. No tickets, no searching, no looking uninformed.
           </p>
@@ -88,7 +91,7 @@ export default function Home() {
               variant="ghost"
               className="glass-chip h-12 gap-2 rounded-full px-7"
             >
-              Or say “Hey Nimbus”
+              Or say “Hey Garfield”
             </Button>
           </div>
 
@@ -108,7 +111,9 @@ export default function Home() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="font-mono text-3xl font-semibold tabular-nums">4/4</p>
+              <p className="font-mono text-3xl font-semibold tabular-nums">
+                4/4
+              </p>
               <Progress value={100} className="mt-3 h-1.5" />
               <p className="mt-3 text-xs text-muted-foreground">
                 Slack, GitHub, Notion, and Calendar — set up before you logged
@@ -143,7 +148,7 @@ export default function Home() {
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-sm font-medium">
                 <BookOpen className="size-4" />
-                What Nimbus knows
+                What Garfield knows
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -156,7 +161,7 @@ export default function Home() {
               </div>
               <p className="mt-3 text-xs text-muted-foreground">
                 Indexed from the engineering wiki, ADRs, and the handbook. If
-                it&apos;s not in there, Nimbus says so instead of guessing.
+                it&apos;s not in there, Garfield says so instead of guessing.
               </p>
             </CardContent>
           </Card>
@@ -166,7 +171,10 @@ export default function Home() {
         <Card className="glass mt-4 rounded-2xl">
           <CardContent className="flex flex-col items-start gap-6 py-8 md:flex-row md:items-center">
             <div className="flex-1">
-              <Badge variant="outline" className="mb-3 border-dashed text-[10px]">
+              <Badge
+                variant="outline"
+                className="mb-3 border-dashed text-[10px]"
+              >
                 Not documented
               </Badge>
               <p className="text-lg text-balance">
@@ -175,7 +183,7 @@ export default function Home() {
                 Platform, she owns the rotation.”
               </p>
               <p className="mt-3 text-sm text-muted-foreground">
-                Nimbus never fills a gap with a guess. Every answer is either
+                Garfield never fills a gap with a guess. Every answer is either
                 sourced or openly handed off.
               </p>
             </div>

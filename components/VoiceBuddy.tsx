@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Nimbus, { type NimbusState } from "./Nimbus";
+import Garfield, { type GarfieldState } from "./Garfield";
 import { Badge } from "@/components/ui/badge";
 import GuidedTour, { type TourStep } from "./GuidedTour";
 import PixelScene, { type PixelAnimation } from "./pixel/PixelScene";
@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 
 type Turn = {
   id: number;
-  from: "nimbus" | "you";
+  from: "garfield" | "you";
   text: string;
   cites?: string[];
   unknown?: boolean;
@@ -27,99 +27,70 @@ type Turn = {
  */
 const TOURS: Record<string, TourStep[]> = {
   payroll: [
-    { target: "systems", label: "Start here — open Systems" },
-    { target: "handbook", label: "Now find Payroll in the Handbook" },
-    {
-      target: "support",
-      label: "Last one — confirm your details with Support",
-    },
+    { target: "systems", label: "Open Systems, then launch ADP" },
+    { target: "handbook", label: "Handbook → Payroll for the deposit form" },
+    { target: "support", label: "Stuck on tax withholding? Support owns it" },
   ],
 };
 
 const ASKS = [
-  "Explain how to set up payroll — in animation",
-  "How do I set up payroll?",
+  "Explain how to set up payroll in ADP — in animation",
+  "How do I set up payroll in ADP?",
   "Explain photosynthesis with an animation",
   "Why do we run two deploy pipelines?",
   "What's our on-call policy?",
 ];
 
 const ANSWERS: Record<string, Omit<Turn, "id" | "from">> = {
-  "Explain how to set up payroll — in animation": {
-    text: "Here's the animated version.",
-    cites: ["wiki/payroll"],
+  "Explain how to set up payroll in ADP — in animation": {
+    text: "Here's the animated version — four steps in ADP.",
+    cites: ["ADP — Payroll setup", "wiki/payroll"],
     animation: {
-      title: "Setting up payroll",
+      title: "Setting up payroll in ADP",
       beats: [
         {
-          sprites: ["person", "document"],
-          caption: "Open your payroll form in the People portal.",
+          sprites: ["person", "computer"],
+          caption:
+            "Open ADP from the AMS launcher — SSO signs you straight in.",
           motion: "rise",
         },
         {
-          sprites: ["document", "arrow", "bank"],
-          caption: "Add the bank account you want to be paid into.",
+          sprites: ["bank", "arrow", "payslip"],
+          caption:
+            "Step 1 — Deposit vault. Add your bank, routing and account number. That's where the paycheck lands.",
           motion: "drift",
         },
         {
-          sprites: ["lock"],
+          sprites: ["document", "check"],
           caption:
-            "Details are encrypted — Finance never sees the raw numbers.",
-          motion: "pulse",
+            "Step 2 — Tax scroll. Filing status and state of residence set how much comes out of each check.",
+          motion: "pop",
         },
         {
           sprites: ["calendar", "coin"],
           caption:
-            "Payroll runs on the 25th. Set up before the 20th to make this cycle.",
-          motion: "pop",
-        },
-        {
-          sprites: ["check", "envelope"],
-          caption: "Done. You'll get a confirmation email within an hour.",
-          motion: "pop",
-        },
-      ],
-    },
-  },
-  "Explain photosynthesis with an animation": {
-    text: "Sure — here's how it works.",
-    cites: ["wiki/onboarding-demo"],
-    animation: {
-      title: "Photosynthesis",
-      beats: [
-        {
-          sprites: ["sun"],
-          caption: "Sunlight hits the leaf.",
+            "Step 3 — Pay calendar. AMS pays bi-weekly, every other Friday. Pick email or mail for your stub.",
           motion: "pulse",
         },
         {
-          sprites: ["co2", "arrow", "leaf"],
-          caption: "The leaf takes in carbon dioxide from the air.",
-          motion: "drift",
-        },
-        {
-          sprites: ["water", "arrow", "soil"],
-          caption: "Roots pull water up from the soil.",
-          motion: "rise",
-        },
-        {
-          sprites: ["sun", "leaf", "water"],
-          caption: "Light splits the water and rebuilds it into sugar.",
-          motion: "pop",
-        },
-        {
-          sprites: ["leaf", "arrow", "oxygen"],
+          sprites: ["lock"],
           caption:
-            "Oxygen is released as the by-product. That is the air we breathe.",
-          motion: "rise",
+            "Your account details are encrypted. Finance sees the deposit, never the raw numbers.",
+          motion: "pulse",
+        },
+        {
+          sprites: ["check", "payslip"],
+          caption:
+            "Step 4 — Final review, then submit. First paycheck lands Friday, August 21.",
+          motion: "pop",
         },
       ],
     },
   },
-  "How do I set up payroll?": {
-    text: "Three steps. I'll point at each one — click where the paw lands and I'll show you the next.",
+  "How do I set up payroll in ADP?": {
+    text: "Four steps in ADP: deposit vault, tax scroll, pay calendar, then a final review. I'll point at each one — click where the paw lands and I'll show you the next.",
     tour: "payroll",
-    cites: ["wiki/payroll"],
+    cites: ["ADP — Payroll setup", "wiki/payroll"],
   },
   "Why do we run two deploy pipelines?": {
     text: "Legacy services still ship through Jenkins. Anything created after the 2024 platform migration goes through GitHub Actions — Jenkins retires once the last three services move over.",
@@ -141,18 +112,18 @@ const clamp = (v: number, lo: number, hi: number) =>
   Math.min(Math.max(v, lo), Math.max(lo, hi));
 
 /**
- * Nimbus, and nothing else.
+ * Garfield, and nothing else.
  *
  * There is no chat panel — the character is the entire interface. Everything
  * it says comes out of the bubble beside it, which keeps the interaction
  * voice-shaped instead of turning into a messaging window.
  */
 export default function VoiceBuddy() {
-  const [state, setState] = useState<NimbusState>("idle");
+  const [state, setState] = useState<GarfieldState>("idle");
   const [caption, setCaption] = useState<Turn | null>(null);
   const [greeting, setGreeting] = useState(false);
   const [asked, setAsked] = useState(0);
-  /** null means Nimbus is still on the travel animation. */
+  /** null means Garfield is still on the travel animation. */
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const [dragging, setDragging] = useState(false);
   const [tour, setTour] = useState<string | null>(null);
@@ -173,7 +144,7 @@ export default function VoiceBuddy() {
   useEffect(() => {
     const hello = setTimeout(() => setGreeting(true), 900);
     // Withdraws itself if ignored. A prompt that hangs around forever reads
-    // as a nag, and Nimbus is meant to be patient, not pushy.
+    // as a nag, and Garfield is meant to be patient, not pushy.
     const bye = setTimeout(() => setGreeting(false), 8000);
     const pending = timers.current;
     return () => {
@@ -195,19 +166,19 @@ export default function VoiceBuddy() {
       };
 
       later(() => {
-        setCaption({ ...body, id: Date.now() + 1, from: "nimbus" });
+        setCaption({ ...body, id: Date.now() + 1, from: "garfield" });
         setState("speaking");
-        // The walkthrough starts once Nimbus has finished introducing it.
+        // The walkthrough starts once Garfield has finished introducing it.
         if (body.tour) later(() => setTour(body.tour!), 1200);
         if (body.video || body.animation)
-          later(() => setMedia({ ...body, id: 0, from: "nimbus" }), 700);
+          later(() => setMedia({ ...body, id: 0, from: "garfield" }), 700);
         later(() => setState("idle"), 4500);
       }, 1500);
     },
     [later],
   );
 
-  /** Clicking Nimbus opens the mic. Real build swaps this for VoiceOS. */
+  /** Clicking Garfield opens the mic. Real build swaps this for VoiceOS. */
   const talk = useCallback(() => {
     if (state !== "idle") return;
     setGreeting(false);
@@ -259,7 +230,7 @@ export default function VoiceBuddy() {
       dragRef.current = null;
       setDragging(false);
       if (!d) return;
-      // Under the threshold it was a click, not a drag. Nimbus keeps the
+      // Under the threshold it was a click, not a drag. Garfield keeps the
       // position pointerdown froze it at and listens right there — handing it
       // back to the travel animation would teleport it mid-sentence.
       if (Math.hypot(e.clientX - d.x0, e.clientY - d.y0) <= 5) talk();
@@ -285,7 +256,7 @@ export default function VoiceBuddy() {
       <div
         className={cn(
           "pointer-events-none fixed z-40",
-          // Once dropped somewhere, Nimbus is positioned explicitly and the
+          // Once dropped somewhere, Garfield is positioned explicitly and the
           // travel animation no longer applies.
           pos ? "w-max" : "inset-x-0 top-1/2 -translate-y-1/2",
         )}
@@ -293,8 +264,8 @@ export default function VoiceBuddy() {
       >
         <div
           ref={boxRef}
-          className={cn("flex w-max items-center", !pos && "nimbus-travel")}
-          // Parks wherever it is the moment Nimbus is engaged, so the bubble
+          className={cn("flex w-max items-center", !pos && "garfield-travel")}
+          // Parks wherever it is the moment Garfield is engaged, so the bubble
           // stays put while you read it.
           style={{
             animationPlayState: state === "idle" ? undefined : "paused",
@@ -305,18 +276,18 @@ export default function VoiceBuddy() {
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
             onDoubleClick={() => setPos(null)}
-            aria-label="Talk to Nimbus — drag to move"
+            aria-label="Talk to Garfield — drag to move"
             title="Drag to move · double-click to set loose"
             className="pointer-events-auto block w-[62px] shrink-0 cursor-grab touch-none select-none active:cursor-grabbing md:w-[84px]"
           >
-            <Nimbus
+            <Garfield
               state={state}
               grabbed={dragging}
               className="h-auto w-full"
             />
           </button>
 
-          {/* Everything Nimbus says lives here. */}
+          {/* Everything Garfield says lives here. */}
           <div className="pointer-events-auto ml-2 w-max max-w-[13rem] md:max-w-[18rem]">
             {status ? (
               <Bubble>
@@ -449,7 +420,7 @@ function Bubble({ children }: { children: React.ReactNode }) {
   return (
     <div className="caption-in glass-chip relative rounded-2xl px-4 py-3 shadow-lg">
       {children}
-      {/* Tail, pointing back at Nimbus. */}
+      {/* Tail, pointing back at Garfield. */}
       <span className="glass-chip absolute -left-1 top-1/2 size-3 -translate-y-1/2 rotate-45 rounded-[3px] border-r-0 border-t-0" />
     </div>
   );

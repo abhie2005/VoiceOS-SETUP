@@ -44,6 +44,9 @@ export const PALETTE: Record<string, string> = {
   r: "#f79191", // red highlight
   V: "#9b7fd4", // violet
   X: "#f490b4", // pink
+  F: "#e2231a", // ADP red — matches the walkthrough in public/
+  f: "#fcebeb", // ADP red tint
+  I: "#141b5c", // ADP navy
 };
 
 export const SPRITES = {
@@ -308,6 +311,25 @@ export const SPRITES = {
     "...KYYYYYYYYYYYoK.......",
     "...KooooooooooooK.......",
     "...KKKKKKKKKKKKKK.......",
+  ],
+
+  /** Pay stub — branded header band, ruled figures, net pay picked out. */
+  payslip: [
+    "....KKKKKKKKKKKKKKKK....",
+    "....KFFFFFFFFFFFFFFK....",
+    "....KFFFFFFFFFFFFFFK....",
+    "....KWWWWWWWWWWWWWWK....",
+    "....KWkkkkkWWWWWWWWK....",
+    "....KWWWWWWWWWWWWWWK....",
+    "....KWkkkkWWWkkkkWWK....",
+    "....KWWWWWWWWWWWWWWK....",
+    "....KWkkkkWWWkkkkWWK....",
+    "....KWWWWWWWWWWWWWWK....",
+    "....KWkkkkWWWkkkkWWK....",
+    "....KWWWWWWWWWWWWWWK....",
+    "....KWWWWWWWWGGGGGWK....",
+    "....KWWWWWWWWGGGGGWK....",
+    "....KKKKKKKKKKKKKKKK....",
   ],
 
   /** Sealed envelope with a wax-red flap line. */
