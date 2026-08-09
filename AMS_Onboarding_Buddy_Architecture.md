@@ -105,6 +105,114 @@ flowchart LR
 
 VoiceOS has no direct visual channel into the Buddy. It handles voice and MCP tool selection; the backend emits correlated workflow events to the web application and extension. The extension can inspect and annotate authorized browser tabs, but it cannot overlay native desktop applications, browser chrome, protected pages, or operating-system dialogs.
 
+## Two-person parallel implementation
+
+The work is split into two independently testable phases that proceed in parallel. Both people implement against one frozen versioned contract; neither phase imports the other phase's internal code.
+
+```mermaid
+flowchart LR
+  Contract[Versioned API, event, auth, and tool contracts]
+
+  subgraph phaseA ["Phase A: Voice and backend control plane"]
+    VoiceMCP[Headless VoiceOS MCP adapter]
+    API[Buddy API]
+    WorkflowA[Workflow and policy engine]
+    Data[Memory, knowledge, audit, and connectors]
+    VoiceMCP --> API --> WorkflowA --> Data
+  end
+
+  subgraph phaseB ["Phase B: Web experience plane"]
+    Web[Onboarding web application]
+    Extension[Browser extension]
+    Content[Tab content scripts and overlays]
+    Web --> Extension --> Content
+  end
+
+  Contract --> PhaseAFixture[Generated client and contract tests]
+  Contract --> PhaseBFixture[Mock API and event fixtures]
+  PhaseAFixture --> VoiceMCP
+  PhaseBFixture --> Web
+  API -->|"HTTPS responses and ordered events"| Web
+  API -->|"Ordered extension commands"| Extension
+  Extension -->|"Page observations and action results"| API
+```
+
+### Contract freeze before parallel work
+
+Agree on and version these boundaries before either phase starts:
+
+- MCP tool names, input schemas, text result shape, and error codes.
+- HTTPS request and response schemas for journey status, questions, memories, action preparation, confirmation, and page observations.
+- Auth claims linking the MCP adapter, web session, extension, employee, and organization.
+- Event envelope: `version`, `eventId`, `turnId`, `sequence`, `type`, `employeeId`, `payload`, and `createdAt`.
+- Extension command and result schemas for inspect, highlight, explain, verify, and confirmed action.
+- A deterministic demo journey and fixture data used by both phases.
+
+Contract changes require a new version or an additive compatible field. This prevents either person's implementation from silently breaking the other.
+
+### Phase A — Voice and backend control plane
+
+**Owner:** Person 1
+
+**Owns:**
+
+- Headless VoiceOS stdio MCP adapter.
+- Buddy HTTPS API and authentication.
+- Onboarding domain model and task state machine.
+- Orchestration, policy, confirmation, and idempotency.
+- Personal memory, workflow state, company knowledge, audit receipts, and credential interfaces.
+- Fake Slack, GitHub, Notion, and Calendar connectors followed by real adapters.
+- Ordered realtime event production.
+
+**Develops independently using:**
+
+- A CLI that invokes MCP tools without the web application.
+- Contract tests for every endpoint and event.
+- A fake browser client that acknowledges extension commands and returns fixture observations.
+
+**Phase A completion criteria:**
+
+- A voice or CLI request can load a fixture journey, answer a cited question, prepare and confirm a fake provisioning action, store a receipt, persist `remember_fact`, and resume after restart.
+- Every state transition emits contract-valid ordered events.
+- Repeating a confirmed request does not duplicate the external action.
+
+### Phase B — Web application and browser extension
+
+**Owner:** Person 2
+
+**Owns:**
+
+- Onboarding dashboard, progress states, approval previews, citations, and concept animations.
+- Browser-extension service worker, session synchronization, and host permissions.
+- Content scripts for DOM inspection, element targeting, highlights, captions, and verification.
+- Confirmed browser click, typing, and form-action adapters.
+- Realtime event consumption, ordering, reconnection, and stale-turn handling.
+- Browser-side privacy controls and short-lived caches.
+
+**Develops independently using:**
+
+- A mock Buddy API generated from the frozen contract.
+- Recorded event sequences for idle, explanation, approval, completion, blocked, and failed states.
+- Static fixture websites representing Slack, GitHub, Notion, Calendar, and benefits flows.
+
+**Phase B completion criteria:**
+
+- Fixture events drive the complete dashboard and animation lifecycle.
+- A mock command can inspect a fixture page, highlight the correct DOM element, wait for confirmation, perform the allowed action, and report verification.
+- Reloading the web app or extension reconnects without replaying stale visual commands.
+
+### Final integration
+
+Integration is limited to replacing each phase's mock boundary with the other phase's real contract-compatible implementation:
+
+1. Sign in once and verify that VoiceOS MCP, web app, extension, employee, and organization resolve to the same session.
+2. Replace Phase A's fake browser client with the real extension event connection.
+3. Replace Phase B's mock API and event stream with the real Buddy backend.
+4. Run one correlation ID through speech, MCP, workflow, dashboard, extension overlay, connector result, audit receipt, and spoken completion.
+5. Verify reconnect, cancellation, duplicate confirmation, connector failure, unsupported page, and “I don't know” behavior.
+
+The integrated architecture is complete only when neither side needs an internal import or implementation-specific exception from the other.
+
 ## End-to-end provisioning turn
 
 ```mermaid
@@ -200,15 +308,15 @@ Browser storage contains only replaceable caches and short-lived session materia
 - **Guided UI:** For unsupported or sensitive websites, the extension highlights the next DOM control. The user performs the action, and the extension verifies the resulting page state before advancing.
 - **Memory:** Personal learning preferences use first-class `remember_fact`; secrets and authoritative task state never enter personal memory.
 
-## Delivery gates
+## Integrated delivery order
 
-- **G9 — Canonical contracts:** onboarding state machine, authenticated API, event contract, persistence interfaces, fake journey data, and tests.
-- **G10 — Voice and dashboard:** headless VoiceOS MCP adapter, status/continue tools, one web dashboard, and synchronized spoken and visual progress.
-- **G11 — Safe actions:** fake connector, confirmation, idempotent receipt, retry, and audit trail.
-- **G12 — Grounded knowledge:** indexed demo corpus, citations, ACL filtering, and verified “I don’t know” fallback.
-- **G13 — Integrations:** implement three or four connector adapters behind the common contract; promote each from fake to real only after credentials, scopes, and rollback behavior are proven.
-- **G14 — Browser guidance:** synchronize the extension, verify one unsupported website flow and one concept animation, and keep benefits elections guidance-only.
-- **G15 — Enterprise hardening:** SSO, tenant isolation, credential vaulting, retention, observability, exportable audit logs, and admin journey authoring.
+1. Freeze contract version 1 and publish the shared fixture journey.
+2. Run Phase A and Phase B concurrently against their contract-generated mocks.
+3. Require each phase to pass its independent completion criteria.
+4. Connect the real backend event stream to the real web application and extension.
+5. Pass the integrated browser smoke flow and failure scenarios.
+6. Promote fake connectors to real integrations one at a time.
+7. Add enterprise hardening: SSO, tenant isolation, credential vaulting, retention, observability, exportable audit logs, and admin journey authoring.
 
 ## Verification
 
