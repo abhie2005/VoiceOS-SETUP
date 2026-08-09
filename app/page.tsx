@@ -1,7 +1,6 @@
 import { Mic, ArrowUpRight, Clock, BookOpen, ShieldCheck } from "lucide-react";
 import AmsLogo from "@/components/AmsLogo";
 import ThemeToggle from "@/components/ThemeToggle";
-import Nimbus from "@/components/Nimbus";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,6 +40,7 @@ export default function Home() {
               <a
                 key={n}
                 href="#"
+                data-tour={n.toLowerCase()}
                 className={
                   i === 0
                     ? "font-medium text-foreground"
@@ -65,11 +65,11 @@ export default function Home() {
       </header>
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-12">
-        {/* Voice-first hero. The orb is the product. */}
+        {/* Nimbus deliberately does not appear here — the only instance is the
+            live one that travels the page, so there's never a second, inert
+            copy competing with it. */}
         <section className="flex flex-col items-center py-10 text-center">
-          <Nimbus state="idle" size={140} />
-
-          <h1 className="mt-9 text-4xl font-semibold tracking-tight text-balance md:text-5xl">
+          <h1 className="text-4xl font-semibold tracking-tight text-balance md:text-5xl">
             Welcome, Joy. Just talk to me.
           </h1>
           <p className="mt-4 max-w-xl text-pretty text-muted-foreground">

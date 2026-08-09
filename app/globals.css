@@ -194,28 +194,125 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ---------- Cloud motion ----------
-   Two keyframes total. Anything more competed with the interface. */
+/* ---------- Sprite motion ----------
+   Everything uses steps() rather than smooth easing. Pixel art that glides
+   between positions reads as a scaled image; snapping between frames reads
+   as a sprite. */
 
-@keyframes cloud-drift {
+@keyframes sprite-bob {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-2px); }
+  50% { transform: translateY(-1px); }
 }
 
-@keyframes cloud-pulse {
-  0%, 100% { transform: scale(0.98); }
-  50% { transform: scale(1.03); }
+/* Being carried. A real cat goes stiff and unimpressed rather than thrashing,
+   so this is a slow, shallow sway — the ears and eyes carry the mood. */
+@keyframes sprite-squirm {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
 }
 
-/* Waves from the shoulder, not the whole arm. */
-@keyframes cloud-wave {
-  0%, 100% { transform: rotate(-7deg); }
-  50% { transform: rotate(9deg); }
+/* ---------- Pixel scene motion ----------
+   Entry motions for sprites in an explainer beat. Kept on steps() so they
+   read as animation frames rather than CSS transitions. */
+
+@keyframes px-pop {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); }
 }
 
-@keyframes cloud-mouth {
-  0%, 100% { transform: scale(1, 0.5); }
-  45% { transform: scale(0.92, 1.2); }
+@keyframes px-rise {
+  0% { transform: translateY(14px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes px-drift {
+  0%, 100% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+}
+
+@keyframes px-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
+
+@keyframes px-shake {
+  0%, 100% { transform: translateX(-2px) rotate(-2deg); }
+  50% { transform: translateX(2px) rotate(2deg); }
+}
+
+.px-pop { animation: px-pop 0.42s steps(4, end) both; }
+.px-rise { animation: px-rise 0.5s steps(4, end) both; }
+.px-drift { animation: px-drift 1.6s steps(3, end) infinite; }
+.px-pulse { animation: px-pulse 1.2s steps(3, end) infinite; }
+.px-shake { animation: px-shake 0.5s steps(2, end) infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .px-pop, .px-rise, .px-drift, .px-pulse, .px-shake { animation: none; }
+}
+
+/* The paw taps toward whatever it's pointing at. */
+@keyframes paw-tap {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.paw-tap { animation: paw-tap 0.9s steps(2, end) infinite; }
+
+/* The element the tour is currently pointing at. */
+[data-tour-active] {
+  position: relative;
+  outline: 2px solid var(--chart-1);
+  outline-offset: 4px;
+  border-radius: 6px;
+  animation: tour-glow 1.4s ease-in-out infinite;
+}
+
+@keyframes tour-glow {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--chart-1) 45%, transparent); }
+  50% { box-shadow: 0 0 0 7px transparent; }
+}
+
+@keyframes sprite-tail {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-14deg); }
+}
+
+@keyframes sprite-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  94% { transform: scaleY(0.2); }
+}
+
+@keyframes sprite-mouth {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.2); }
+}
+
+/* Nimbus crosses the page. Alternating rather than looping — a linear loop
+   teleports back to the right edge, which reads as a glitch. */
+@keyframes nimbus-travel {
+  from { transform: translateX(calc(100vw - 9rem)); }
+  to { transform: translateX(0.5rem); }
+}
+
+@media (min-width: 768px) {
+  @keyframes nimbus-travel {
+    from { transform: translateX(calc(100vw - 18rem)); }
+    to { transform: translateX(1rem); }
+  }
+}
+
+.nimbus-travel {
+  animation: nimbus-travel 26s ease-in-out infinite alternate;
+}
+
+/* Hovering parks it — a moving target is hard to click. */
+.nimbus-travel:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nimbus-travel { animation: none; }
 }
 
 .voice-ring { animation: voice-ring 2.2s ease-out infinite; transform-origin: center; }
