@@ -27,9 +27,9 @@ type Turn = {
  */
 const TOURS: Record<string, TourStep[]> = {
   payroll: [
-    { target: "systems", label: "Open Systems, then launch ADP" },
-    { target: "handbook", label: "Handbook → Payroll for the deposit form" },
-    { target: "support", label: "Stuck on tax withholding? Support owns it" },
+    { target: "finance", label: "Start here — open Finance" },
+    { target: "payroll-card", label: "This is payroll, running on ADP" },
+    { target: "deposit-setup", label: "Now set up your direct deposit" },
   ],
 };
 

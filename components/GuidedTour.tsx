@@ -37,15 +37,14 @@ export default function GuidedTour({ steps, onDone }: Props) {
 
   useEffect(() => {
     if (!step) return;
-    const el = document.querySelector<HTMLElement>(
-      `[data-tour="${step.target}"]`,
-    );
-    if (!el) return;
 
-    el.dataset.tourActive = "true";
-    el.scrollIntoView({ block: "center", behavior: "smooth" });
+    let el: HTMLElement | null = null;
+    let raf = 0;
+    let poll = 0;
+    let tries = 0;
 
     const measure = () => {
+      if (!el) return;
       const r = el.getBoundingClientRect();
       // Paw sits below the target normally, above it when the target is near
       // the bottom of the viewport and there'd be no room.
@@ -57,18 +56,40 @@ export default function GuidedTour({ steps, onDone }: Props) {
       });
     };
 
-    // Deferred rather than called inline — a synchronous setState in an effect
-    // body cascades renders.
-    const raf = requestAnimationFrame(measure);
+    /**
+     * A step can point at something on a different page — clicking "Finance"
+     * navigates, and the next target only mounts once that route renders. So
+     * wait for it rather than querying once and giving up.
+     */
+    const attach = () => {
+      el = document.querySelector<HTMLElement>(`[data-tour="${step.target}"]`);
 
-    el.addEventListener("click", advance);
+      if (!el) {
+        // ~6s at 150ms. Long enough for a route change, short enough that a
+        // typo'd target doesn't leave the paw hanging forever.
+        if (tries++ < 40) poll = window.setTimeout(attach, 150);
+        return;
+      }
+
+      el.dataset.tourActive = "true";
+      el.scrollIntoView({ block: "center", behavior: "smooth" });
+      el.addEventListener("click", advance);
+      // Deferred rather than called inline — a synchronous setState in an
+      // effect body cascades renders.
+      raf = requestAnimationFrame(measure);
+    };
+
+    attach();
     window.addEventListener("resize", measure);
     window.addEventListener("scroll", measure, true);
 
     return () => {
+      clearTimeout(poll);
       cancelAnimationFrame(raf);
-      delete el.dataset.tourActive;
-      el.removeEventListener("click", advance);
+      if (el) {
+        delete el.dataset.tourActive;
+        el.removeEventListener("click", advance);
+      }
       window.removeEventListener("resize", measure);
       window.removeEventListener("scroll", measure, true);
     };

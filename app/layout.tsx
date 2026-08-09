@@ -4,6 +4,8 @@ import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import VoiceBuddy from "@/components/VoiceBuddy";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import SiteHeader from "@/components/SiteHeader";
+import AmsLogo from "@/components/AmsLogo";
 
 const bricolage = Bricolage_Grotesque({
   variable: "--font-bricolage",
@@ -41,7 +43,20 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               without this the panels read as flat translucent rectangles. */}
           <div aria-hidden className="ambient" />
           <TooltipProvider>
+            {/* Header and footer live in the layout so they persist across
+                route changes — which is what lets a walkthrough step on one
+                page hand off to a target on another. */}
+            <SiteHeader />
             {children}
+            <footer className="border-t border-border px-6 py-8">
+              <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4">
+                <AmsLogo className="h-7 w-14 text-muted-foreground" />
+                <p className="text-xs text-muted-foreground">
+                  AMS is a fictional company built for the VoiceOS hackathon
+                  demo.
+                </p>
+              </div>
+            </footer>
             <VoiceBuddy />
           </TooltipProvider>
         </ThemeProvider>
