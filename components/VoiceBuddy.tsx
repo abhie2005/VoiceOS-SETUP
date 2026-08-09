@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Garfield, { type GarfieldState } from "./Garfield";
+import { Globe } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import GuidedTour, { type TourStep } from "./GuidedTour";
 import PixelScene, {
@@ -23,6 +24,12 @@ type Turn = {
   animation?: PixelAnimation;
   /** Names a walkthrough in TOURS — the step-by-step answer mode. */
   tour?: string;
+  /**
+   * Which tier the answer came from. "general" is true-but-unverified and must
+   * never be presented as AMS policy.
+   */
+  scope?: "company" | "general" | "unknown";
+  disclaimer?: string;
 };
 
 /**
@@ -38,77 +45,11 @@ const TOURS: Record<string, TourStep[]> = {
 };
 
 const ASKS = [
-  "Explain how to set up payroll in ADP — in animation",
   "How do I set up payroll in ADP?",
-  "Explain photosynthesis with an animation",
-  "Why do we run two deploy pipelines?",
+  "What is a 401k?",
   "What's our on-call policy?",
+  "Explain photosynthesis",
 ];
-
-const ANSWERS: Record<string, Omit<Turn, "id" | "from">> = {
-  "Explain how to set up payroll in ADP — in animation": {
-    text: "Here's the animated version — four steps in ADP.",
-    cites: ["ADP — Payroll setup", "wiki/payroll"],
-    animation: {
-      title: "Setting up payroll in ADP",
-      beats: [
-        {
-          sprites: ["person", "computer"],
-          caption:
-            "Open ADP from the AMS launcher — SSO signs you straight in.",
-          motion: "rise",
-        },
-        {
-          sprites: ["bank", "arrow", "payslip"],
-          caption:
-            "Step 1 — Deposit vault. Add your bank, routing and account number. That's where the paycheck lands.",
-          motion: "drift",
-        },
-        {
-          sprites: ["document", "check"],
-          caption:
-            "Step 2 — Tax scroll. Filing status and state of residence set how much comes out of each check.",
-          motion: "pop",
-        },
-        {
-          sprites: ["calendar", "coin"],
-          caption:
-            "Step 3 — Pay calendar. AMS pays bi-weekly, every other Friday. Pick email or mail for your stub.",
-          motion: "pulse",
-        },
-        {
-          sprites: ["lock"],
-          caption:
-            "Your account details are encrypted. Finance sees the deposit, never the raw numbers.",
-          motion: "pulse",
-        },
-        {
-          sprites: ["check", "payslip"],
-          caption:
-            "Step 4 — Final review, then submit. First paycheck lands Friday, August 21.",
-          motion: "pop",
-        },
-      ],
-    },
-  },
-  "How do I set up payroll in ADP?": {
-    text: "Four steps in ADP: deposit vault, tax scroll, pay calendar, then a final review. I'll point at each one — click where the paw lands and I'll show you the next.",
-    tour: "payroll",
-    cites: ["ADP — Payroll setup", "wiki/payroll"],
-  },
-  "Why do we run two deploy pipelines?": {
-    text: "Legacy services still ship through Jenkins. Anything created after the 2024 platform migration goes through GitHub Actions — Jenkins retires once the last three services move over.",
-    cites: ["ADR-014 Platform Migration", "wiki/deploys"],
-  },
-  "How do I get staging access?": {
-    text: "Staging sits behind the eng-staging group. I can request it now — one approval from your manager, usually lands within the hour.",
-    cites: ["wiki/environments"],
-  },
-  "What's our on-call policy?": {
-    text: "I don't have this documented. On-call rotations aren't in anything I've indexed, so I'd rather not guess — ask Priya Raman on Platform, she owns the rotation.",
-    unknown: true,
-  },
-};
 
 const GREETING = "Hey! Do you want to start onboarding?";
 
@@ -159,25 +100,45 @@ export default function VoiceBuddy() {
   }, []);
 
   const respond = useCallback(
-    (q: string) => {
+    async (q: string) => {
       setGreeting(false);
       setCaption({ id: Date.now(), from: "you", text: q });
       setState("thinking");
 
-      const body = ANSWERS[q] ?? {
-        text: "I don't have that documented. Rather than guess, I'll flag it so it gets written down for the next hire.",
-        unknown: true,
-      };
+      let body: Omit<Turn, "id" | "from">;
+      try {
+        const res = await fetch("/api/ask", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ question: q }),
+        });
+        const data = await res.json();
+        body = {
+          text: data.text,
+          scope: data.scope,
+          disclaimer: data.disclaimer,
+          unknown: data.scope === "unknown",
+          cites: (data.citations ?? []).map((c: { title: string }) => c.title),
+          animation: data.animation
+            ? toPixelAnimation(data.animation)
+            : undefined,
+          tour: data.tour,
+        };
+      } catch {
+        // A dead API must not strand the character mid-turn.
+        body = {
+          text: "I couldn't reach the knowledge base just then. Ask me again in a moment.",
+          scope: "unknown",
+          unknown: true,
+        };
+      }
 
-      later(() => {
-        setCaption({ ...body, id: Date.now() + 1, from: "garfield" });
-        setState("speaking");
-        // The walkthrough starts once Garfield has finished introducing it.
-        if (body.tour) later(() => setTour(body.tour!), 1200);
-        if (body.video || body.animation)
-          later(() => setMedia({ ...body, id: 0, from: "garfield" }), 700);
-        later(() => setState("idle"), 4500);
-      }, 1500);
+      setCaption({ ...body, id: Date.now() + 1, from: "garfield" });
+      setState("speaking");
+      if (body.tour) later(() => setTour(body.tour!), 1200);
+      if (body.animation || body.video)
+        later(() => setMedia({ ...body, id: 0, from: "garfield" }), 700);
+      later(() => setState("idle"), 4500);
     },
     [later],
   );
@@ -350,7 +311,7 @@ export default function VoiceBuddy() {
                   </span>
                 ) : (
                   <>
-                    {shownCaption.unknown && (
+                    {shownCaption.scope === "unknown" && (
                       <Badge
                         variant="outline"
                         className="mb-2 border-dashed text-[10px] font-semibold uppercase"
@@ -358,9 +319,23 @@ export default function VoiceBuddy() {
                         Not documented
                       </Badge>
                     )}
+                    {shownCaption.scope === "general" && (
+                      <Badge
+                        variant="outline"
+                        className="mb-2 gap-1.5 border-dashed text-[10px] font-semibold uppercase"
+                      >
+                        <Globe className="size-2.5" />
+                        General — not AMS policy
+                      </Badge>
+                    )}
                     <p className="text-sm leading-relaxed">
                       {shownCaption.text}
                     </p>
+                    {shownCaption.disclaimer && (
+                      <p className="mt-2 border-l-2 border-dashed border-muted-foreground/40 pl-2 text-[11px] leading-snug text-muted-foreground">
+                        {shownCaption.disclaimer}
+                      </p>
+                    )}
                     {(shownCaption.video || shownCaption.animation) && (
                       <button
                         onClick={() => setMedia(shownCaption)}
