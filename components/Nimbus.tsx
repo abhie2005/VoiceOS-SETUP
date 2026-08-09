@@ -6,135 +6,176 @@ type Props = {
   state?: NimbusState;
   size?: number;
   className?: string;
-  /** Drops arms and face — for tiny inline marks. */
+  /** Head only — for tiny inline marks. */
   bare?: boolean;
+  /** Being dragged. Nimbus has opinions about this. */
+  grabbed?: boolean;
 };
 
 /**
- * Lumpy cloud silhouette. Circles of deliberately uneven size and spacing — a
- * smooth path reads as a weather icon; the irregularity is what makes it read
- * as drawn by hand.
+ * Nimbus, as a 20×19 pixel sprite.
+ *
+ * K outline · F fur · S stripe · L light fur · P pink · E eye · T tail
+ * The whiskers are the K pixels that poke out past the head on rows 6, 8, 10.
  */
-const PUFFS = [
-  { cx: 50, cy: 30, r: 16 },
-  { cx: 31, cy: 41, r: 17 },
-  { cx: 70, cy: 39, r: 18 },
-  { cx: 50, cy: 50, r: 25 },
-  { cx: 23, cy: 58, r: 16 },
-  { cx: 78, cy: 57, r: 16.5 },
-  { cx: 37, cy: 68, r: 16 },
-  { cx: 63, cy: 69, r: 15 },
+const SPRITE = [
+  "...KK........KK.....",
+  "..K.K........K.K....",
+  "..K.PK......KP.K....",
+  "..KPP.KKKKKK.PPK....",
+  ".KFFFFFFFFFFFFFFK...",
+  ".KFSFFFFFFFFFFSFK...",
+  "KKFSFFFFFFFFFFSFKK..",
+  ".KFFFFFFFFFFFFFFK...",
+  "KKFFEEFFFFFFEEFFKK..",
+  ".KFFEEFFFFFFEEFFK...",
+  "KKFFFFFFLLFFFFFFKK..",
+  ".KFFFFFLPPLFFFFFK...",
+  "..KFFFFLLLLFFFFK....",
+  "...KKFFFFFFFFKK.....",
+  "....KFFFFFFFFK..TT..",
+  "....KFLLLLLLFK.T..T.",
+  "....KFLLLLLLFK.T....",
+  "....KKLLKKLLKK.T....",
+  ".....KKKK.KKKK.TT...",
 ];
 
 /**
- * Nimbus — a flat cloud with a face and stubby arms.
- *
- * Solid currentColor fill, no gradient, no glow: the character is the
- * silhouette plus a few knocked-out strokes. Because the fill is currentColor
- * it inverts with the theme.
- *
- * The viewBox extends past the body on both sides so the arms have somewhere
- * to go without the body needing to shrink.
+ * Ears pinned flat, which is the whole tell. Replaces rows 0-3 while Nimbus is
+ * being carried around against its wishes.
  */
+const FLAT_EARS = [
+  "....................",
+  "....................",
+  ".KK............KK...",
+  ".KPPKKKKKKKKKKPPK...",
+];
+
+const COLORS: Record<string, string> = {
+  K: "#2f3336",
+  F: "#9aa4ad",
+  S: "#6f7981",
+  L: "#eef1f4",
+  P: "#e79aa8",
+  E: "#2f3336",
+  T: "#9aa4ad",
+};
+
+/** Rows below this are body — dropped in `bare` mode. */
+const HEAD_ROWS = 13;
+
 export default function Nimbus({
   state = "idle",
-  size = 96,
+  size = 72,
   className,
   bare = false,
+  grabbed = false,
 }: Props) {
   const listening = state === "listening";
   const speaking = state === "speaking";
   const thinking = state === "thinking";
 
+  const base = grabbed ? [...FLAT_EARS, ...SPRITE.slice(4)] : SPRITE;
+  const rows = bare ? base.slice(0, HEAD_ROWS) : base;
+  const body: React.ReactNode[] = [];
+  const eyes: React.ReactNode[] = [];
+  const tail: React.ReactNode[] = [];
+
+  rows.forEach((row, y) => {
+    [...row].forEach((ch, x) => {
+      if (ch === ".") return;
+      const rect = (
+        <rect
+          key={`${x}-${y}`}
+          x={x}
+          y={y}
+          width="1"
+          height="1"
+          fill={COLORS[ch]}
+        />
+      );
+      if (ch === "E") eyes.push(rect);
+      else if (ch === "T") tail.push(rect);
+      else body.push(rect);
+    });
+  });
+
   return (
     <svg
-      viewBox="0 -4 120 106"
+      viewBox={`0 0 20 ${rows.length}`}
       width={size}
-      height={size * 0.883}
-      className={cn("text-foreground", className)}
+      height={(size * rows.length) / 20}
+      className={cn(className)}
       role="img"
-      aria-label={`Nimbus is ${state}`}
+      aria-label={`Nimbus the cat is ${state}`}
+      // Without this, neighbouring pixels get antialiased and hairline seams
+      // show through the sprite.
+      shapeRendering="crispEdges"
     >
       <g
         style={{
           transformBox: "fill-box",
-          transformOrigin: "center",
-          animation: speaking
-            ? "cloud-pulse 1.1s ease-in-out infinite"
-            : listening
-              ? "cloud-pulse 2.4s ease-in-out infinite"
-              : "cloud-drift 8s ease-in-out infinite",
+          transformOrigin: "bottom center",
+          animation: grabbed
+            ? "sprite-squirm 0.75s steps(2, end) infinite"
+            : speaking
+              ? "sprite-bob 0.42s steps(2, end) infinite"
+              : listening
+                ? "sprite-bob 0.9s steps(2, end) infinite"
+                : "sprite-bob 2.4s steps(2, end) infinite",
         }}
       >
-        {/* Arms — straight tapered bars with flat chiselled ends, drawn under
-            the body so the joins disappear. No hands, no rounding. */}
+        {/* Tail flicks from its base. */}
         {!bare && (
-          <g fill="currentColor">
-            {/* Two arms, both reaching right — the left side is the edge it
-                peeks around, so nothing needs to be drawn over there. */}
-            <polygon points="65,84 93,98 99,86 71,72" />
-
-            {/* Upper right arm — raised, and it waves from the shoulder. */}
-            <g
-              style={{
-                transformBox: "fill-box",
-                transformOrigin: "bottom left",
-                animation: `cloud-wave ${speaking ? "0.7s" : "2.8s"} ease-in-out infinite`,
-              }}
-            >
-              <polygon points="81,62 117,40 113,32 75,50" />
-            </g>
+          <g
+            style={{
+              transformBox: "fill-box",
+              transformOrigin: "bottom left",
+              animation: `sprite-tail ${grabbed ? "0.45s" : speaking ? "0.5s" : "1.8s"} steps(2, end) infinite`,
+            }}
+          >
+            {tail}
           </g>
         )}
 
-        {/* Body. One flat colour, no strokes, so the overlaps vanish. */}
-        <g fill="currentColor">
-          {PUFFS.map((p, i) => (
-            <circle key={i} {...p} />
-          ))}
+        {body}
+
+        {/* Eyes: squint when thinking, blink on their own when idle. */}
+        <g
+          style={{
+            transformBox: "fill-box",
+            transformOrigin: "center",
+            transform: thinking || grabbed ? "scaleY(0.4)" : undefined,
+            animation:
+              state === "idle" && !grabbed
+                ? "sprite-blink 4s steps(1, end) infinite"
+                : undefined,
+          }}
+        >
+          {eyes}
         </g>
 
-        {/* Face, knocked out in the background colour. */}
-        {!bare && (
-          <g
-            className="text-background"
-            stroke="currentColor"
-            strokeWidth="3.4"
-            strokeLinecap="round"
-            fill="none"
-          >
-            {listening ? (
-              <g fill="currentColor" stroke="none">
-                <circle cx="41" cy="47" r="3.2" />
-                <circle cx="59" cy="47" r="3.2" />
-              </g>
-            ) : (
-              <>
-                <path d="M36 49 Q41 43 46 49" />
-                <path d="M54 49 Q59 43 64 49" />
-              </>
-            )}
+        {/* Yowling, plus the manga anger mark. */}
+        {grabbed && (
+          <>
+            <rect x="8" y="12" width="2" height="1" fill="#2f3336" />
+          </>
+        )}
 
-            {speaking ? (
-              <ellipse
-                cx="50"
-                cy="61"
-                rx="6"
-                ry="5"
-                fill="currentColor"
-                stroke="none"
-                style={{
-                  transformBox: "fill-box",
-                  transformOrigin: "center",
-                  animation: "cloud-mouth 0.44s ease-in-out infinite",
-                }}
-              />
-            ) : thinking ? (
-              <path d="M44 60 L56 60" />
-            ) : (
-              <path d="M41 57 Q50 66 59 57" />
-            )}
-          </g>
+        {/* Mouth opens only while talking. */}
+        {speaking && !bare && !grabbed && (
+          <rect
+            x="8"
+            y="12"
+            width="2"
+            height="1"
+            fill="#2f3336"
+            style={{
+              transformBox: "fill-box",
+              transformOrigin: "center",
+              animation: "sprite-mouth 0.42s steps(2, end) infinite",
+            }}
+          />
         )}
       </g>
     </svg>
