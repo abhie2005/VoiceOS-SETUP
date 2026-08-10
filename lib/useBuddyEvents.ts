@@ -47,14 +47,13 @@ export function useBuddyEvents(url?: string): BuddyLiveState {
   const seq = useRef(-1);
 
   useEffect(() => {
-    const endpoint = url ?? process.env.NEXT_PUBLIC_BUDDY_EVENTS_URL;
-    if (!endpoint) return;
+    const endpoint =
+      url ?? process.env.NEXT_PUBLIC_BUDDY_EVENTS_URL ?? "/api/events";
 
     // `resume` lets the server replay only what we missed, which is the whole
     // point of a monotonic per-employee sequence.
     const src = new EventSource(
       seq.current >= 0 ? `${endpoint}?resume=${seq.current}` : endpoint,
-      { withCredentials: true },
     );
 
     const onOpen = () => setState((s) => ({ ...s, connected: true }));
